@@ -3,10 +3,14 @@
 
 .. nsight-python documentation master file
 
-Docs
-----
+Nsight Python
+--------------
+Welcome to the Nsight Python documentation!
+
+**Nsight Python** is a Python kernel profiling interface that automates performance analysis across multiple kernel configurations using NVIDIA Nsight Tools. To get started with Nsight Python, take a look at our :doc:`quickstart <overview/quickstart>` guide.
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Overview
 
@@ -17,6 +21,7 @@ Docs
 
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Release Notes
 
@@ -26,6 +31,7 @@ Docs
 
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Installation
 
@@ -35,6 +41,7 @@ Docs
 
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Nsight Python API Reference
 
@@ -42,6 +49,7 @@ Docs
    annotation
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: For Contributors
 
@@ -53,6 +61,7 @@ Docs
    utils
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Other Resources
 

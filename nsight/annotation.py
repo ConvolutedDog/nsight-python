@@ -37,6 +37,16 @@ class annotate(nvtx.annotate):  # type: ignore[misc]
             continue. The measured metric for this run will be set to NaN.
             Default: ``False``
 
+    Note:
+        All annotations are created under the NVTX domain ``"nsight-python"``.
+        This domain is used internally to filter and identify Nsight Python
+        annotations in profiling tools.
+
+    Note:
+        Nested annotations are currently not supported. However, since each
+        annotation is expected to contain a single kernel launch by default,
+        nested annotations should not be necessary in typical usage scenarios.
+
     """
 
     def __init__(self, name: str, ignore_failures: bool = False):

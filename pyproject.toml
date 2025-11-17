@@ -66,9 +66,6 @@ filterwarnings = [
 
 ]
 
-[tool.hatch.envs.default.env-vars]
-PIP_EXTRA_INDEX_URL="https://test.pypi.org/simple/"
-
 [tool.hatch.envs.docs]
 dependencies = [
   "sphinx>=7.0",
