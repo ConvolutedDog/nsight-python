@@ -30,10 +30,12 @@ def _sanitize_configs(
     handles different cases of passing configurations.
 
     1. As regular args+kw - A single configuration -> the function arguments
-    2. As configs=, a list of configurations at functionn call time
-    3. As decorator_configs=, a list of configurations at decoration time
+    2. As configs=, an iterable of configurations at function call time
+    3. As decorator_configs=, an iterable of configurations at decoration time
+    4. No configs provided - For functions with no parameters, automatically creates [()]
 
     Args:
+        func: The function being decorated.
         *args: Positional arguments that may contain configuration data.
         configs: A list of configurations provided at runtime.
         decorator_configs: A list of configurations provided
@@ -44,13 +46,15 @@ def _sanitize_configs(
         A sanitized list of configurations.
 
     Raises:
-        exceptions.ProfilerException: If no configurations are provided or if
-            configurations are provided both at decoration time and runtime.
+        exceptions.ProfilerException: If no configurations are provided and the
+            function has parameters, or if configurations are provided both at
+            decoration time and runtime.
         AssertionError: If `configs` is not a list when provided.
 
     Notes:
         - If `args` are provided, `configs` and `decorator_configs` must be `None`.
         - If `configs` is provided, `decorator_configs` must be `None`, and vice versa.
+        - For functions with no parameters, an empty config [()] is created automatically.
         - The function combines `args` and `kwargs` into a single list if `args` are provided.
         - The function assumes that `kwargs` keys are in the expected order when combining.
     """
@@ -67,10 +71,19 @@ def _sanitize_configs(
 
     if configs is None:
         if decorator_configs is None:
-            raise exceptions.ProfilerException(
-                "You have provided no configs. Provide configs at decoration time or at runtime."
-            )
-        configs = decorator_configs
+            # Check if function takes no arguments
+            sig = inspect.signature(func)
+            expected_arg_count = len(sig.parameters)
+            if expected_arg_count == 0:
+                # For functions with no arguments, create a single empty config
+                # This allows calling the function without requiring explicit configs
+                configs = [()]
+            else:
+                raise exceptions.ProfilerException(
+                    "You have provided no configs. Provide configs at decoration time or at runtime."
+                )
+        else:
+            configs = decorator_configs
 
     else:
         if decorator_configs is not None:

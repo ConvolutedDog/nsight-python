@@ -41,7 +41,8 @@ def aggregate_data(
     num_args = len(inspect.signature(func).parameters)
 
     # Get the last N fields of the dataframe where N is the number of arguments
-    func_fields = df.columns[-num_args:].tolist()
+    # Note: When num_args=0, we need an empty list (not all columns via [-0:])
+    func_fields = df.columns[-num_args:].tolist() if num_args > 0 else []
 
     # Function to convert non-sortable columns to strings
     def convert_non_sortable_columns(dframe: pd.DataFrame) -> pd.DataFrame:

@@ -122,6 +122,179 @@ def test_config_at_call_time_with_kwargs() -> None:
         config_at_call_time_configs(42, y=23)
 
 
+# ----------------------------------------------------------------------------
+# Tests for functions with no arguments
+# ----------------------------------------------------------------------------
+
+
+@nsight.analyze.kernel
+def no_args_function_no_parens() -> None:
+    """Test function with no arguments using decorator without parentheses."""
+    a = torch.randn(64, 64, device="cuda")
+    b = torch.randn(64, 64, device="cuda")
+    with nsight.annotate("test"):
+        _ = a + b
+
+
+def test_no_args_function_no_parens() -> None:
+    """Test that function with no args works without providing configs."""
+    # Should work without configs since the function takes no arguments
+    # and we just want to run it once (or with default runs).
+    no_args_function_no_parens()
+
+
+# ----------------------------------------------------------------------------
+
+
+@nsight.analyze.kernel()
+def no_args_function_with_parens() -> None:
+    """Test function with no arguments using decorator with empty parentheses."""
+    a = torch.randn(64, 64, device="cuda")
+    b = torch.randn(64, 64, device="cuda")
+    with nsight.annotate("test"):
+        _ = a + b
+
+
+def test_no_args_function_with_parens() -> None:
+    """Test that function with no args works with empty parentheses."""
+    # Should work without configs since the function takes no arguments
+    # and we just want to run it once (or with default runs).
+    result = no_args_function_with_parens()
+
+    # Verify the dataframe structure
+    assert result is not None, "ProfileResults should be returned"
+    df = result.to_dataframe()
+
+    # Should have exactly 1 row (1 annotation, 1 config with no params)
+    assert len(df) == 1, f"Expected 1 row in dataframe, got {len(df)}"
+
+    # Verify annotation name
+    assert df["Annotation"].iloc[0] == "test", "Expected annotation 'test'"
+
+    # Verify metric value is reasonable (should be positive)
+    assert df["AvgValue"].iloc[0] > 0, "Expected positive metric value"
+
+
+# ----------------------------------------------------------------------------
+
+
+@nsight.analyze.kernel(runs=3)
+def no_args_function_with_kwargs() -> None:
+    """Test function with no arguments using decorator with keyword arguments."""
+    a = torch.randn(64, 64, device="cuda")
+    b = torch.randn(64, 64, device="cuda")
+    with nsight.annotate("test"):
+        _ = a + b
+
+
+def test_no_args_function_with_kwargs() -> None:
+    """Test that function with no args works when decorator has kwargs."""
+    # Should work without configs since the function takes no arguments
+    # and we just want to run it multiple times with the specified runs.
+    result = no_args_function_with_kwargs()
+
+    # Verify the dataframe structure
+    assert result is not None, "ProfileResults should be returned"
+    df = result.to_dataframe()
+
+    # Should have exactly 1 row (1 annotation, 1 config with no params)
+    assert len(df) == 1, f"Expected 1 row in dataframe, got {len(df)}"
+
+    # Verify that runs=3 was respected
+    assert df["NumRuns"].iloc[0] == 3, f"Expected 3 runs, got {df['NumRuns'].iloc[0]}"
+
+
+# ----------------------------------------------------------------------------
+
+
+def test_no_args_vs_with_args_dataframe_comparison() -> None:
+    """Compare dataframe structure for functions with and without arguments."""
+
+    # Test function with no args
+    @nsight.analyze.kernel(output="quiet")
+    def no_args() -> None:
+        a = torch.randn(64, 64, device="cuda")
+        b = torch.randn(64, 64, device="cuda")
+        with nsight.annotate("test"):
+            _ = a + b
+
+    # Test function with args
+    @nsight.analyze.kernel(configs=[(32,), (64,)], output="quiet")
+    def with_args(size: int) -> None:
+        a = torch.randn(size, size, device="cuda")
+        b = torch.randn(size, size, device="cuda")
+        with nsight.annotate("test"):
+            _ = a + b
+
+    result_no_args = no_args()
+    result_with_args = with_args()
+
+    assert result_no_args is not None
+    assert result_with_args is not None
+
+    df_no_args = result_no_args.to_dataframe()
+    df_with_args = result_with_args.to_dataframe()
+
+    # No-args function should have 1 row (1 config)
+    assert (
+        len(df_no_args) == 1
+    ), f"No-args function should have 1 row, got {len(df_no_args)}"
+
+    # With-args function should have 2 rows (2 configs)
+    assert (
+        len(df_with_args) == 2
+    ), f"With-args function should have 2 rows, got {len(df_with_args)}"
+
+    assert (
+        "size" in df_with_args.columns
+    ), "With-args function should have 'size' column"
+
+    # Verify the size values in the dataframe match the configs
+    assert set(df_with_args["size"].values) == {32, 64}
+
+
+# ----------------------------------------------------------------------------
+
+
+def test_no_args_function_with_derive_metric() -> None:
+    """Test that derive_metric works with functions that have no arguments."""
+
+    # Define a derive_metric function that only takes the metric value
+    # (no config parameters since the function has no args)
+    def custom_metric(time_ns: float) -> float:
+        """Convert time to arbitrary custom metric."""
+        return time_ns / 1e6  # Convert to milliseconds
+
+    @nsight.analyze.kernel(runs=2, output="quiet", derive_metric=custom_metric)
+    def no_args_with_transform() -> None:
+        a = torch.randn(128, 128, device="cuda")
+        b = torch.randn(128, 128, device="cuda")
+        with nsight.annotate("test"):
+            _ = a @ b
+
+    result = no_args_with_transform()
+
+    assert result is not None, "ProfileResults should be returned"
+    df = result.to_dataframe()
+
+    # Should have exactly 1 row
+    assert len(df) == 1, f"Expected 1 row in dataframe, got {len(df)}"
+
+    # Verify the transformation was applied
+    assert (
+        df["Transformed"].iloc[0] == "custom_metric"
+    ), f"Expected 'custom_metric' in Transformed column, got {df['Transformed'].iloc[0]}"
+
+    # Verify the value is positive (transformed metric should still be positive)
+    assert df["AvgValue"].iloc[0] > 0, "Expected positive transformed metric value"
+
+    # Verify runs parameter was respected
+    assert df["NumRuns"].iloc[0] == 2, f"Expected 2 runs, got {df['NumRuns'].iloc[0]}"
+
+
+# ----------------------------------------------------------------------------
+
+
 # ============================================================================
 # Parameter validation tests
 # ============================================================================
