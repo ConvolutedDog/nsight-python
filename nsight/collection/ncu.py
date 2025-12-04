@@ -184,7 +184,7 @@ class NCUCollector(core.NsightCollector):
 
     def collect(
         self,
-        func: Callable[..., Any],
+        func: Callable[..., None],
         configs: Sequence[Sequence[Any]],
         settings: core.ProfileSettings,
     ) -> pd.DataFrame | None:

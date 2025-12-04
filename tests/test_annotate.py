@@ -7,6 +7,7 @@ import pytest
 import torch
 
 import nsight
+from nsight import annotation
 from nsight.utils import CUDA_CORE_AVAILABLE
 
 configs = [(i,) for i in range(5)]
@@ -114,3 +115,77 @@ def test_annotate_decorator(ignore_failures: bool) -> None:
             raise_exception(a, False)
 
     annotate_decorator()
+
+
+# ============================================================================
+# Active annotations tracking tests
+# ============================================================================
+
+
+def test_active_annotations_nested() -> None:
+    """Test that nested annotations raise ValueError with context manager."""
+
+    @nsight.analyze.kernel(configs=[(64,)], runs=10, output="quiet")
+    def nested_annotation_test(n: int) -> None:
+        a = torch.randn(n, n, device="cuda")
+        b = torch.randn(n, n, device="cuda")
+
+        # First annotation should work fine
+        with nsight.annotate("outer_test"):
+            _ = a + b
+
+            # Trying to nest annotations should raise ValueError
+            with pytest.raises(
+                ValueError, match="Nested annotations are not supported"
+            ):
+                with nsight.annotate("inner_test"):
+                    _ = a - b
+
+    nested_annotation_test()
+
+
+def test_active_annotations_duplicate_name() -> None:
+    """Test that duplicate annotation names raise ValueError even when sequential."""
+
+    @nsight.analyze.kernel(configs=[(64,)], runs=10, output="quiet")
+    def duplicate_annotation_test(n: int) -> None:
+        a = torch.randn(n, n, device="cuda")
+        b = torch.randn(n, n, device="cuda")
+
+        # First annotation should work fine
+        with nsight.annotate("duplicate_test"):
+            _ = a + b
+
+        # Trying to use the same name again (even sequentially) should raise ValueError
+        with pytest.raises(
+            ValueError, match="Annotation name 'duplicate_test' has already been used"
+        ):
+            with nsight.annotate("duplicate_test"):
+                _ = a - b
+
+    duplicate_annotation_test()
+
+
+def test_active_annotations_duplicate_name_decorator() -> None:
+    """Test that nested annotations raise ValueError with decorator."""
+
+    @nsight.annotate("nested_decorator_test")
+    def annotated_function(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        return a + b
+
+    @nsight.analyze.kernel(configs=[(64,)], runs=10, output="quiet")
+    def duplicate_annotation_decorator_test(n: int) -> None:
+        a = torch.randn(n, n, device="cuda")
+        b = torch.randn(n, n, device="cuda")
+
+        # Using a context manager and then calling a decorated function should fail
+        with nsight.annotate("outer_annotation"):
+            _ = a + b
+
+            with pytest.raises(
+                ValueError,
+                match="Nested annotations are not supported",
+            ):
+                _ = annotated_function(a, b)
+
+    duplicate_annotation_decorator_test()

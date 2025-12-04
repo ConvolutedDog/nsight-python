@@ -18,7 +18,7 @@ import nsight.visualization as visualization
 # Overload 1: When used without parentheses: @kernel
 @overload
 def kernel(
-    _func: Callable[..., Any],
+    _func: Callable[..., None],
 ) -> Callable[..., collection.core.ProfileResults]: ...
 
 
@@ -41,12 +41,12 @@ def kernel(
     combine_kernel_metrics: Callable[[float, float], float] | None = None,
     output_prefix: str | None = None,
     output_csv: bool = False,
-) -> Callable[[Callable[..., Any]], Callable[..., collection.core.ProfileResults]]: ...
+) -> Callable[[Callable[..., None]], Callable[..., collection.core.ProfileResults]]: ...
 
 
 # Implementation
 def kernel(
-    _func: Callable[..., Any] | None = None,
+    _func: Callable[..., None] | None = None,
     *,
     configs: Sequence[Sequence[Any]] | None = None,
     runs: int = 1,
@@ -64,7 +64,7 @@ def kernel(
     output_csv: bool = False,
 ) -> (
     Callable[..., collection.core.ProfileResults]
-    | Callable[[Callable[..., Any]], Callable[..., collection.core.ProfileResults]]
+    | Callable[[Callable[..., None]], Callable[..., collection.core.ProfileResults]]
 ):
     """
     A decorator that collects profiling data using NVIDIA Nsight Compute.

@@ -7,13 +7,15 @@ import functools
 import importlib.util
 import inspect
 import os
+import threading
 import time
+import warnings
 from collections.abc import Callable, Sequence
 from typing import Any
 
 import pandas as pd
 
-from nsight import exceptions, thermovision, transformation, utils
+from nsight import annotation, exceptions, thermovision, transformation, utils
 
 
 def _sanitize_configs(
@@ -126,7 +128,7 @@ def _sanitize_configs(
 
 
 def run_profile_session(
-    func: Callable[..., Any],
+    func: Callable[..., None],
     configs: Sequence[Sequence[Any]],
     runs: int,
     output_progress: bool,
@@ -151,6 +153,7 @@ def run_profile_session(
 
     # overwrite flag: we do not overwrite when output mode is detailed
     overwrite_output = not output_detailed
+    show_return_type_warning = False
 
     for c in configs:
         curr_config += 1
@@ -171,8 +174,13 @@ def run_profile_session(
                     f"Function '{func.__name__}' does not support the input configuration"
                 )
 
+            # Clear active annotations before each run
+            annotation.clear_active_annotations()
+
             # Run the function with the config
-            func(*c)
+            result = func(*c)  # type: ignore[func-returns-value]
+            if result is not None:
+                show_return_type_warning = True
 
             elapsed_time = time.time() - start_time
             if curr_run > 1:
@@ -201,6 +209,16 @@ def run_profile_session(
             bar_length,
             avg_time_per_run,
             overwrite_output,
+        )
+
+    if show_return_type_warning:
+        external_stacklevel = max(
+            1, utils.find_external_stacklevel() - 1
+        )  # We subtract 1 to exclude the stacklevel increase caused by the find_external_stack_level call
+        warnings.warn(
+            f"Function '{func.__name__}' returns a value, but the return value for a function which is decorated with nsight.analyze.kernel is ignored and instead the ProfileResults object is returned.",
+            category=RuntimeWarning,
+            stacklevel=external_stacklevel,
         )
 
 
@@ -360,7 +378,7 @@ class NsightProfiler:
         self.collector = collector
 
     def __call__(
-        self, func: Callable[..., Any]
+        self, func: Callable[..., None]
     ) -> Callable[..., ProfileResults | None]:
         func._nspy_ncu_run_id = 0  # type: ignore[attr-defined]
 
@@ -378,6 +396,8 @@ class NsightProfiler:
                 decorator_configs=self.settings.configs,
                 **kwargs,
             )
+
+            # Check if the function has a return type
 
             raw_df = self.collector.collect(func, configs, self.settings)
 

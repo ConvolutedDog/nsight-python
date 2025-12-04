@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import functools
+import inspect
+import os
 import re
 import subprocess
 import sys
@@ -322,3 +324,29 @@ def format_ncu_error_message(context: NCUErrorContext) -> str:
     )
 
     return "\n".join(message_parts)
+
+
+def find_external_stacklevel() -> int:
+    """
+    Find the stacklevel corresponding to the first frame outside the nsight package.
+    This is equivalent to warnings.warn()'s skip_file_prefixes parameter, which was introduced
+    in Python 3.12 .
+
+    Returns:
+        int: The stacklevel (1-based, as expected by warnings.warn).
+    """
+    try:
+        import nsight
+
+        pkg_dir = os.path.dirname(os.path.abspath(nsight.__file__))
+    except Exception:
+        pkg_dir = None
+
+    # Iterate over stack frames
+    for level, frame_info in enumerate(inspect.stack(), start=1):
+        frame_filename = os.path.abspath(frame_info.filename)
+        if pkg_dir is None or not frame_filename.startswith(pkg_dir):
+            return level
+
+    # Fallback: if all frames are inside the package, use the topmost one
+    return 1
