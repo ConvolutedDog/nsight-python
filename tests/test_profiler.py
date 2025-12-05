@@ -288,7 +288,7 @@ def test_no_args_function_with_derive_metric() -> None:
         a = torch.randn(128, 128, device="cuda")
         b = torch.randn(128, 128, device="cuda")
         with nsight.annotate("test"):
-            _ = a @ b
+            _ = a + b
 
     result = no_args_with_transform()
 
