@@ -187,7 +187,7 @@ class NCUCollector(core.NsightCollector):
         func: Callable[..., None],
         configs: Iterable[Sequence[Any]],
         settings: core.ProfileSettings,
-    ) -> pd.DataFrame | None:
+    ) -> pd.DataFrame | list[pd.DataFrame] | None:
         """
         Collects profiling data using NVIDIA Nsight Compute.
 
@@ -226,18 +226,32 @@ class NCUCollector(core.NsightCollector):
                     f"[NSIGHT-PYTHON] Refer to {log_path} for the NVIDIA Nsight Compute CLI logs"
                 )
 
-            # Extract raw data
-            df = extraction.extract_df_from_report(
-                report_path,
-                self.metric,
-                configs,  # type: ignore[arg-type]
-                settings.runs,
-                func,
-                settings.derive_metric,
-                self.ignore_kernel_list,  # type: ignore[arg-type]
-                settings.output_progress,
-                self.combine_kernel_metrics,
-            )
+            def _extract_dataframe(metric_name: str) -> pd.DataFrame:
+                return extraction.extract_df_from_report(
+                    report_path,
+                    metric_name,
+                    configs,  # type: ignore[arg-type]
+                    settings.runs,
+                    func,
+                    settings.derive_metric,
+                    self.ignore_kernel_list,  # type: ignore[arg-type]
+                    settings.output_progress,
+                    self.combine_kernel_metrics,
+                )
+
+            def _check_multi_metric() -> bool:
+                # Check if multiple metrics are being profiled, separated by commas.
+                # Maybe we can support list of metrics in the future.
+                return "," in self.metric
+
+            if _check_multi_metric():
+                # Extract raw data for multiple metrics, which are separated by commas.
+                metrics = [m.strip() for m in self.metric.split(",")]
+                df = [_extract_dataframe(m) for m in metrics]
+            else:
+                # Extract raw data for single metric.
+                df = _extract_dataframe(self.metric)
+
             return df
 
         else:

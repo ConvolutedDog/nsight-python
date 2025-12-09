@@ -45,3 +45,8 @@ def test_07_triton_minimal() -> None:
     pytest.importorskip("triton")
     triton_minimal = importlib.import_module("examples.07_triton_minimal")
     triton_minimal.main()
+
+
+def test_08_multiple_metrics() -> None:
+    multiple_metrics = importlib.import_module("examples.08_multiple_metrics")
+    multiple_metrics.main()

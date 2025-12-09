@@ -248,6 +248,27 @@ def kernel(
         return profiler(_func)  # type: ignore[return-value]
 
 
+def _check_single_metric(result: collection.core.ProfileResults) -> None:
+    """
+    Check if ProfileResults contains only a single metric.
+
+    Args:
+        result: ProfileResults object
+
+    Raises:
+        ValueError: If multiple metrics are detected
+    """
+    df = result.to_dataframe()
+    unique_metrics = df["Metric"].unique()
+    if len(unique_metrics) > 1:
+        raise ValueError(
+            "Cannot visualize multiple metrics with @nsight.analyze.plot decorator. "
+            f"Detected {len(unique_metrics)} different metrics: "
+            f"{','.join(unique_metrics)}. "
+            "Please modify @nsight.analyze.kernel decorator to specify only a single metric.\n"
+        )
+
+
 def plot(
     filename: str = "plot.png",
     *,
@@ -324,6 +345,9 @@ def plot(
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
+
+            # Check for multiple metrics and raise ValueError if found.
+            _check_single_metric(result)
 
             if "NSPY_NCU_PROFILE" not in os.environ:
                 visualization.visualize(

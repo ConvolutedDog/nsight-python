@@ -1,0 +1,73 @@
+# Copyright 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+Example 8: Collecting Multiple Metrics
+=======================================
+
+This example shows how to collect multiple metrics in a single profiling run.
+
+New concepts:
+- Using the `metric` parameter to coolect multiple metrics, which are separated with commas
+- `@nsight.analyze.plot` decorator does NOT support multiple metrics now
+"""
+
+import torch
+
+import nsight
+
+
+@nsight.analyze.kernel(
+    runs=5,
+    # Collect both shared memory load and store SASS instructions
+    # Metrics are separated by commas
+    metric="smsp__sass_inst_executed_op_shared_ld.sum,smsp__sass_inst_executed_op_shared_st.sum",
+)
+def analyze_shared_memory_ops(n: int) -> None:
+    """Analyze oth shared memory load and store SASS instructions
+    for different kernels.
+
+    Note: When multiple metrics are specified (comma-separated),
+    all results are merged into a single ProfileResults object.
+    The 'Metric' column in the DataFrame distinguishes between them.
+    """
+
+    a = torch.randn(n, n, device="cuda")
+    b = torch.randn(n, n, device="cuda")
+
+    with nsight.annotate("@-operator"):
+        _ = a @ b
+
+    with nsight.annotate("torch.matmul"):
+        _ = torch.matmul(a, b)
+
+
+def main() -> None:
+    # Run analysis with multiple metrics
+    results = analyze_shared_memory_ops(1024)
+
+    df = results.to_dataframe()
+    print(df)
+
+    unique_metrics = df["Metric"].unique()
+    print(f"\n✓ Collected {len(unique_metrics)} metrics:")
+    for metric in unique_metrics:
+        print(f"  - {metric}")
+
+    print("\n✓ Sample data:")
+    print(df[["Annotation", "n", "Metric", "AvgValue"]].head().to_string(index=False))
+
+    print("\n" + "=" * 60)
+    print("IMPORTANT: @plot decorator limitation")
+    print("=" * 60)
+    print("When multiple metrics are collected:")
+    print("  ✓ All metrics are collected in a single ProfileResults object")
+    print("  ✓ DataFrame has 'Metric' column to distinguish them")
+    print("  ✗ @nsight.analyze.plot decorator will RAISE AN ERROR")
+    print("\nWhy? @plot can only visualize one metric at a time.")
+    print("Tip: Use separate @kernel functions for each metric or")
+    print("     filter the DataFrame before custom plotting.")
+
+
+if __name__ == "__main__":
+    main()

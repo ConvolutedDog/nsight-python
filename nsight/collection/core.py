@@ -428,12 +428,21 @@ class NsightProfiler:
             raw_df = self.collector.collect(func, configs, self.settings)
 
             if raw_df is not None:
-                processed = transformation.aggregate_data(
-                    raw_df,
-                    func,
-                    self.settings.normalize_against,
-                    self.settings.output_progress,
-                )
+
+                def _aggregate_single_df(df: pd.DataFrame) -> pd.DataFrame:
+                    return transformation.aggregate_data(
+                        df,
+                        func,
+                        self.settings.normalize_against,
+                        self.settings.output_progress,
+                    )
+
+                if isinstance(raw_df, list):
+                    processed = pd.concat(
+                        [_aggregate_single_df(df) for df in raw_df], ignore_index=True
+                    )
+                else:
+                    processed = _aggregate_single_df(raw_df)
 
                 # Save to CSV if enabled
                 if self.settings.output_csv:

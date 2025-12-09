@@ -85,3 +85,8 @@ This will profile a simple matrix multiplication and generate a plot showing the
   - Using `variant_fields` and `variant_annotations`
   - Comparing against PyTorch baselines with `normalize_against`
   - Showing speedup metrics
+
+- **`08_multiple_metrics.py`** - Collecting multiple metrics
+  - Collecting multiple metrics with comma-separated strings
+  - Merged results with `"Metric"` column in DataFrame
+  - `@plot` decorator incompatible with multiple metrics
