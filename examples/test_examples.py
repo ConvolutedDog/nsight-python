@@ -50,3 +50,18 @@ def test_07_triton_minimal() -> None:
 def test_08_multiple_metrics() -> None:
     multiple_metrics = importlib.import_module("examples.08_multiple_metrics")
     multiple_metrics.main()
+
+
+def test_09_advanced_metric_custom() -> None:
+    advanced_custom = importlib.import_module("examples.09_advanced_metric_custom")
+    advanced_custom.main()
+
+
+def test_10_combine_kernel_metrics() -> None:
+    combine_metrics = importlib.import_module("examples.10_combine_kernel_metrics")
+    combine_metrics.main()
+
+
+def test_11_output_csv() -> None:
+    output_csv = importlib.import_module("examples.11_output_csv")
+    output_csv.main()

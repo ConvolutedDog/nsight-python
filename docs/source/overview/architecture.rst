@@ -21,12 +21,23 @@ Advanced Options
 ----------------
 
 **Metric Selection**  
-Nsight Python collects `gpu__time_duration.sum` by default. To collect another NVIDIA Nsight Compute metric:
+Nsight Python collects `gpu__time_duration.sum` by default. To collect another NVIDIA Nsight Compute metrics:
 
 .. code-block:: python
 
-   @nsight.analyze.kernel(metric="sm__throughput.avg.pct_of_peak_sustained_elapsed")
-   def benchmark(...):
+   @nsight.analyze.kernel(metrics=["sm__throughput.avg.pct_of_peak_sustained_elapsed"])
+   def benchmark1(...):
+       ...
+
+   # or
+   @nsight.analyze.kernel(
+       metrics=[
+           "smsp__sass_inst_executed_op_shared_ld.sum",
+           "smsp__sass_inst_executed_op_shared_st.sum",
+           "launch__sm_count",
+       ],
+   )
+   def benchmark2(...):
        ...
 
 **Derived Metrics**  
@@ -37,7 +48,7 @@ Define a Python function that computes metrics like TFLOPs based on runtime and 
    def tflops(t, m, n, k):
        return 2 * m * n * k / (t / 1e9) / 1e12
 
-   @nsight.analyze.kernel(configs=[(1024, 1024, 64)], derive_metric=tflops)
+   @nsight.analyze.kernel(configs=[(1024, 1024, 64)], derive_metrics=tflops)
    def benchmark(m, n, k):
        ...
 

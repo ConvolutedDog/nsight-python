@@ -5,6 +5,7 @@ This directory contains examples demonstrating how to use Nsight Python for prof
 ## Prerequisites
 
 ### Required
+
 - **Python 3.10+**
 - **CUDA-capable GPU**
 - **NVIDIA Nsight Compute** (for profiling)
@@ -14,6 +15,7 @@ This directory contains examples demonstrating how to use Nsight Python for prof
 The examples require additional packages beyond the base `nsight` package:
 
 #### PyTorch
+
 Most examples use PyTorch for GPU operations:
 
 ```bash
@@ -25,6 +27,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cuXXX
 Visit [pytorch.org](https://pytorch.org/get-started/locally/) for installation commands matching your specific CUDA version.
 
 #### Triton (Optional)
+
 For the Triton examples (`07_triton_minimal.py`):
 
 ```bash
@@ -60,7 +63,7 @@ This will profile a simple matrix multiplication and generate a plot showing the
   - Visualizing performance across problem sizes
 
 - **`03_custom_metrics.py`** - Computing TFLOPs
-  - Using `derive_metric` to compute custom metrics
+  - Using `derive_metrics` to compute custom metrics
   - Understanding the metric function signature
   - Transforming time measurements into performance metrics
 
@@ -87,6 +90,19 @@ This will profile a simple matrix multiplication and generate a plot showing the
   - Showing speedup metrics
 
 - **`08_multiple_metrics.py`** - Collecting multiple metrics
-  - Collecting multiple metrics with comma-separated strings
+  - Collecting multiple metrics with sequence of strings
   - Merged results with `"Metric"` column in DataFrame
   - `@plot` decorator incompatible with multiple metrics
+
+- **`09_advanced_metric_custom.py`** - Computing advanced metrics
+  - Collecting multiple metrics with sequence of strings
+  - Using `derive_metrics` to compute custom metrics from multiple metrics
+
+- **`10_multiple_kernels_combine.py`** - Combining metrics from multiple kernels
+  - Using `combine_kernel_metrics` to aggregate metrics from multiple kernels
+  - Summing metrics from consecutive kernel executions
+
+- **`11_output_csv.py`** - Outputting to CSV
+  - Using `output_csv` parameter to enable/disable CSV file generation
+  - Using `output_prefix` to specify output file location and naming
+  - Read and display generated CSV files

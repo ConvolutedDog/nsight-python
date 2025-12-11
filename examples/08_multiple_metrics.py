@@ -8,7 +8,7 @@ Example 8: Collecting Multiple Metrics
 This example shows how to collect multiple metrics in a single profiling run.
 
 New concepts:
-- Using the `metric` parameter to coolect multiple metrics, which are separated with commas
+- Using the `metrics` parameter to coolect multiple metrics
 - `@nsight.analyze.plot` decorator does NOT support multiple metrics now
 """
 
@@ -20,8 +20,10 @@ import nsight
 @nsight.analyze.kernel(
     runs=5,
     # Collect both shared memory load and store SASS instructions
-    # Metrics are separated by commas
-    metric="smsp__sass_inst_executed_op_shared_ld.sum,smsp__sass_inst_executed_op_shared_st.sum",
+    metrics=[
+        "smsp__sass_inst_executed_op_shared_ld.sum",
+        "smsp__sass_inst_executed_op_shared_st.sum",
+    ],
 )
 def analyze_shared_memory_ops(n: int) -> None:
     """Analyze oth shared memory load and store SASS instructions
@@ -66,7 +68,7 @@ def main() -> None:
     print("  ✗ @nsight.analyze.plot decorator will RAISE AN ERROR")
     print("\nWhy? @plot can only visualize one metric at a time.")
     print("Tip: Use separate @kernel functions for each metric or")
-    print("     filter the DataFrame before custom plotting.")
+    print("     use 'derive_metrics' to compute custom values.")
 
 
 if __name__ == "__main__":
