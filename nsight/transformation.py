@@ -14,9 +14,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 
-def _value_aggregator(agg_func_name: str) -> Callable[[pd.Series], np.ndarray]:
+def _value_aggregator(agg_func_name: str) -> Callable[[pd.Series], NDArray[Any]]:
     """Factory function to create value aggregators.
 
     Args:
@@ -44,7 +45,7 @@ def _value_aggregator(agg_func_name: str) -> Callable[[pd.Series], np.ndarray]:
 
     numpy_agg_func = AGG_FUNCTIONS[agg_func_name]
 
-    def aggregator(series: pd.Series) -> np.ndarray:
+    def aggregator(series: pd.Series) -> NDArray[Any]:
         # Convert None to np.nan
         cleaned_series = series.apply(lambda x: np.nan if x is None else x)
         # Convert to numpy array, handling tuples

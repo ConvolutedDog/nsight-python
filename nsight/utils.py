@@ -13,6 +13,7 @@ from itertools import islice
 from typing import Any, Iterator
 
 import numpy as np
+from numpy.typing import NDArray
 
 from nsight.exceptions import (
     CUDA_CORE_UNAVAILABLE_MSG,
@@ -133,7 +134,7 @@ def print_header(*lines: str) -> None:
 @dataclass
 class NCUActionData:
     name: str
-    values: np.ndarray | None
+    values: NDArray[Any] | None
     compute_clock: int
     memory_clock: int
     gpu: str

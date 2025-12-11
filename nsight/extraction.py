@@ -24,6 +24,7 @@ from typing import Any, List, Tuple
 import ncu_report
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from nsight import exceptions, utils
 from nsight.utils import is_scalar
@@ -105,7 +106,7 @@ def extract_df_from_report(
         )
 
     annotations: List[str] = []
-    all_values: List[np.ndarray | None] = []
+    all_values: List[NDArray[Any] | None] = []
     kernel_names: List[str] = []
     gpus: List[str] = []
     compute_clocks: List[int] = []
