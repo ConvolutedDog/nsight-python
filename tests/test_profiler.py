@@ -6,9 +6,7 @@ Test suite for Nsight Python profiler functionality.
 """
 
 import os
-import re
 import shutil
-import tempfile
 from collections.abc import Generator
 from typing import Any, Literal
 
@@ -953,8 +951,8 @@ def test_parameter_metric(metric: str) -> None:
     if metric == "invalid_value":
         with pytest.raises(
             exceptions.ProfilerException,
-            match=re.escape(
-                f"Invalid value '['{metric}']' for 'metric' parameter for nsight.analyze.kernel()"
+            match=(
+                rf"Invalid value \['{metric}'\] for 'metrics' parameter for nsight.analyze.kernel()"
             ),
         ):
             profiled_func()

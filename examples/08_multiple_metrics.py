@@ -51,7 +51,7 @@ def main() -> None:
     df = results.to_dataframe()
     print(df)
 
-    unique_metrics = df["Metric"].unique()[0]
+    unique_metrics = df["Metric"].unique()
     print(f"\n✓ Collected {len(unique_metrics)} metrics:")
     for metric in unique_metrics:
         print(f"  - {metric}")

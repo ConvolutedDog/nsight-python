@@ -19,7 +19,7 @@ from nsight.exceptions import (
     CUDA_CORE_UNAVAILABLE_MSG,
     MetricErrorType,
     NCUErrorContext,
-    get_metric_error_message,
+    get_metrics_error_message,
 )
 
 # Try to import cuda-core (optional dependency)
@@ -321,7 +321,7 @@ def format_ncu_error_message(context: NCUErrorContext) -> str:
 
     if context.errors and INVALID_METRIC_ERROR_HINT in context.errors[0]:
         message_parts.append(
-            get_metric_error_message(
+            get_metrics_error_message(
                 context.metrics, error_type=MetricErrorType.INVALID
             )
         )

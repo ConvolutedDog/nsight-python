@@ -245,10 +245,6 @@ class NCUCollector(core.NsightCollector):
             # If NSPY_NCU_PROFILE is set, just run the function normally
             name = os.environ["NSPY_NCU_PROFILE"]
 
-            # TODO: If we have two functions to profile in one script, we cannot access
-            # the result of the first function. Because when we profile the second function,
-            # the first function will return None.
-
             # If this is not the function we are profiling, stop
             if func.__name__ != name:
                 return None

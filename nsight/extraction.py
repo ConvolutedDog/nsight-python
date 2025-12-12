@@ -43,7 +43,7 @@ def extract_ncu_action_data(action: Any, metrics: Sequence[str]) -> utils.NCUAct
     """
     for metric in metrics:
         if metric not in action.metric_names():
-            error_message = exceptions.get_metric_error_message(
+            error_message = exceptions.get_metrics_error_message(
                 metric, error_type=exceptions.MetricErrorType.INVALID
             )
             raise exceptions.ProfilerException(error_message)
@@ -206,7 +206,6 @@ def extract_df_from_report(
             # evaluate the measured metrics
             values = data.values
             if derive_metrics is not None:
-                # TODO: Add support for multiple derived metrics.
                 derived_metrics: float | int | None = (
                     None if values is None else derive_metrics(*values, *conf)
                 )

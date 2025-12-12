@@ -224,17 +224,4 @@ def aggregate_data(
     # Add geomean values to the DataFrame
     agg_df["Geomean"] = agg_df["Annotation"].map(geomean_values)
 
-    # If the column has only one value, and it's a list/tuple/np.ndarray, flatten it.
-    agg_df = agg_df.apply(
-        lambda col: (
-            col.apply(
-                lambda x: (
-                    x[0]
-                    if isinstance(x, (list, tuple, np.ndarray)) and len(x) == 1
-                    else x
-                )
-            )
-        )
-    )
-
     return agg_df

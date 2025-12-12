@@ -46,7 +46,7 @@ class NCUNotAvailableError(Exception):
 CUDA_CORE_UNAVAILABLE_MSG = "cuda-core is required for ignore_failures functionality.\n Install it with:\n  - pip install nsight-python[cu12]  (if you have CUDA 12.x)\n  - pip install nsight-python[cu13]  (if you have CUDA 13.x)"
 
 
-def get_metric_error_message(
+def get_metrics_error_message(
     metrics: Sequence[str], error_type: MetricErrorType
 ) -> str:
     """
@@ -60,7 +60,7 @@ def get_metric_error_message(
         str: User-friendly error message with guidance.
     """
     return (
-        f"{error_type.value} value '{metrics}' for 'metrics' parameter for nsight.analyze.kernel(). "
+        f"{error_type.value} value {metrics} for 'metrics' parameter for nsight.analyze.kernel()."
         f"\nPlease refer ncu --query-metrics for list of supported metrics."
     )
 
