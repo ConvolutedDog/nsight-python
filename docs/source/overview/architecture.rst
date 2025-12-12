@@ -21,7 +21,7 @@ Advanced Options
 ----------------
 
 **Metric Selection**  
-Nsight Python collects `gpu__time_duration.sum` by default. To collect another NVIDIA Nsight Compute metrics:
+Nsight Python collects `gpu__time_duration.sum` by default. To collect other NVIDIA Nsight Compute metrics:
 
 .. code-block:: python
 

@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Example: Multiple Kernels per Run with Combined Metrics
-========================================================
+Example 10: Multiple Kernels per Run with Combined Metrics
+===========================================================
 
 This example shows how to profile multiple kernels in a single run and combine their metrics.
 
