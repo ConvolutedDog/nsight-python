@@ -1,35 +1,17 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+from __future__ import annotations
+
 import atexit
+import functools
 import glob
 import hashlib
 import os
 from pathlib import Path
+from typing import ClassVar, Optional
 
 import pandas as pd
-
-
-def _cache_dir_path() -> Path:
-    """
-    Return the cache directory for generated files in global ncu
-    profile cache manager.
-
-    Returns:
-        Path to the cache directory.
-    """
-    # Get cache directory
-    _env_cache_dir = os.environ.get("NSIGHT_PYTHON_CACHE_DIR")
-    if _env_cache_dir is None:
-        _cache_dir = Path.home() / Path(".nsight-python")
-    else:
-        _cache_dir = Path(_cache_dir)
-
-    # Get absolute path
-    _cache_dir = _cache_dir.absolute()
-
-    # Create directory if it doesn't exist
-    if not _cache_dir.exists():
-        _cache_dir.mkdir(parents=True, exist_ok=True)
-
-    return _cache_dir
 
 
 class GlobalNCUProfileCache:
@@ -37,10 +19,11 @@ class GlobalNCUProfileCache:
     A global ncu profile cache manager with singleton pattern.
     """
 
-    _instance = None  # Singleton instance
+    # Singleton instance
+    _instance: ClassVar[GlobalNCUProfileCache | None] = None
 
-    def __new__(cls) -> "GlobalNCUProfileCache":
-        cache_dir = _cache_dir_path()
+    def __new__(cls) -> GlobalNCUProfileCache:
+        cache_dir = cls._cache_dir_path()
 
         # If instance already exists
         if cls._instance is not None:
@@ -73,10 +56,38 @@ class GlobalNCUProfileCache:
         # Global shared profile ID
         self._global_ncu_profile_id = 0
         # Currently active cache directory
-        self._active_cache_dir = _cache_dir_path()
+        self._active_cache_dir = self._cache_dir_path()
 
         # Register cleanup function
         atexit.register(self._cleanup_cache_files)
+
+    # ===== Cache Directory Methods =====
+
+    @classmethod
+    @functools.lru_cache(maxsize=1)
+    def _cache_dir_path(cls) -> Path:
+        """
+        Return the cache directory for generated files in global ncu
+        profile cache manager.
+
+        Returns:
+            Path to the cache directory.
+        """
+        # Get cache directory
+        _env_cache_dir = os.environ.get("NSIGHT_PYTHON_CACHE_DIR")
+        if _env_cache_dir is None:
+            _cache_dir = Path.home() / Path(".nsight-python")
+        else:
+            _cache_dir = Path(_env_cache_dir)
+
+        # Get absolute path
+        _cache_dir = _cache_dir.absolute()
+
+        # Create directory if it doesn't exist
+        if not _cache_dir.exists():
+            _cache_dir.mkdir(parents=True, exist_ok=True)
+
+        return _cache_dir
 
     # ===== ID Management Methods =====
 
