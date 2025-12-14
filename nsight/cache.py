@@ -16,9 +16,9 @@ def _cache_dir_path() -> Path:
         Path to the cache directory.
     """
     # Get cache directory
-    _cache_dir = os.environ.get("NSIGHT_PYTHON_CACHE_DIR")
-    if _cache_dir is None:
-        _cache_dir = Path.home() / ".nsight-python"
+    _env_cache_dir = os.environ.get("NSIGHT_PYTHON_CACHE_DIR")
+    if _env_cache_dir is None:
+        _cache_dir = Path.home() / Path(".nsight-python")
     else:
         _cache_dir = Path(_cache_dir)
 
@@ -39,7 +39,7 @@ class GlobalNCUProfileCache:
 
     _instance = None  # Singleton instance
 
-    def __new__(cls):
+    def __new__(cls) -> "GlobalNCUProfileCache":
         cache_dir = _cache_dir_path()
 
         # If instance already exists
@@ -64,7 +64,7 @@ class GlobalNCUProfileCache:
 
         return instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Prevent reinitialization
         if hasattr(self, "_initialized"):
             return
