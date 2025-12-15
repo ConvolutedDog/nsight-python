@@ -539,6 +539,49 @@ def test_parameter_normalize_against() -> None:
         assert (df.loc[df["Annotation"] == "annotation1", "AvgValue"] == 1).all()
 
 
+@nsight.analyze.kernel(
+    configs=(
+        (1,),
+        (2,),
+        (3,),
+    ),
+    runs=3,
+    normalize_against="annotation1",
+    # Some parameters that have a numerical determinism greater than
+    # 1 and grow with substantial increases in n.
+    metrics=[
+        "smsp__inst_executed.sum",
+        "smsp__inst_issued.sum",
+        "smsp__sass_inst_executed_op_global_ld.sum",
+        "smsp__sass_inst_executed_op_global_st.sum",
+    ],
+)
+def normalize_against_multiple_metrics(n: int) -> None:
+    a = torch.randn(n, n, device="cuda")
+    b = torch.randn(n, n, device="cuda")
+
+    c = torch.randn(100 * n, 100 * n, device="cuda")
+    d = torch.randn(100 * n, 100 * n, device="cuda")
+
+    with nsight.annotate("annotation1"):
+        _ = a + b
+
+    with nsight.annotate("annotation2"):
+        _ = c + d
+
+
+def test_parameter_normalize_against_multiple_metrics() -> None:
+    profile_output = normalize_against_multiple_metrics()
+    if profile_output is not None:
+        df = profile_output.to_dataframe()
+
+        assert df["Metric"].str.contains("relative to annotation1").all()
+        # AvgValue for the annotation being used as normalization factor should be 1
+        assert (df.loc[df["Annotation"] == "annotation1", "AvgValue"] == 1).all()
+        # Validate that the AvgValue for the annotation being used for normalization is greater than 1
+        assert (df.loc[df["Annotation"] == "annotation2", "AvgValue"] > 1).all()
+
+
 # ============================================================================
 # Output prefix tests
 # ============================================================================
