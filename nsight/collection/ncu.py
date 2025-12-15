@@ -54,6 +54,9 @@ def launch_ncu(
     """
     assert report_path.endswith(".ncu-rep")
 
+    # Set an environment variable to track the main process ID.
+    os.environ["NSPY_NCU_MAIN_PID"] = str(os.getpid())
+
     # Determine the script being executed
     script_path = os.path.abspath(sys.argv[0])
     script_args = " ".join(sys.argv[1:])
@@ -99,7 +102,6 @@ def launch_ncu(
                 shell=True,
                 check=True,
                 env=env,
-                stdout=subprocess.DEVNULL,
             )
 
             return log_path
