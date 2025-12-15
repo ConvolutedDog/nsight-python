@@ -105,7 +105,12 @@ def kernel(
             This can be used to compute derived metrics like TFLOPs that cannot
             be captured by ncu directly. The function takes the metric values and
             the arguments of the profile-decorated function and returns the new
-            metric. See the examples for concrete use cases.
+            metric. The parameter order requirements for the custom function:
+
+            - First several arguments: Must exactly match the order of metrics declared in the @kernel decorator. These arguments will receive the actual measured values of those metrics.
+            - Remaining arguments: Must exactly match the signature of the decorated function. In other words, the original function's parameters are passed in order.
+
+            See the examples for concrete use cases.
         normalize_against:
             Annotation name to normalize metrics against.
             This is useful to compute relative metrics like speedup.
@@ -256,8 +261,7 @@ def kernel(
 
 def _validate_metric(result: collection.core.ProfileResults) -> None:
     """
-    Check if ProfileResults contains only a single metric and does
-    not contain complex data structures.
+    Check if ProfileResults contains only a single metric.
 
     Args:
         result: ProfileResults object
@@ -267,49 +271,12 @@ def _validate_metric(result: collection.core.ProfileResults) -> None:
     """
     df = result.to_dataframe()
 
-    # 1. Check for multiple metrics in "Metric" column
+    # Check for multiple metrics in "Metric" column
     unique_metrics = df["Metric"].unique()
     if len(unique_metrics) > 1:
         raise ValueError(
             f"Cannot visualize {len(unique_metrics)} > 1 metrics with the "
             "@nsight.analyze.plot decorator."
-        )
-
-    # 2. Check for complex data structures in other columns
-    complex_data_columns = []
-    for column in df.columns:
-        # Skip "Metric", it can be tuple of multiple metrics
-        if column == "Metric":
-            continue
-
-        # Skip non-data columns
-        if column not in [
-            "AvgValue",
-            "StdDev",
-            "MinValue",
-            "MaxValue",
-            "NumRuns",
-            "CI95_Lower",
-            "CI95_Upper",
-            "RelativeStdDevPct",
-            "Geomean",
-        ]:
-            continue
-
-        # Check column values
-        for value in df[column]:
-            if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 1:
-                complex_data_columns.append(column)
-                break
-
-    if complex_data_columns:
-        raise ValueError(
-            "Cannot visualize data containing complex data structures. "
-            f"Detected columns with arrays/lists/tuples: {', '.join(complex_data_columns)}. "
-            "The @nsight.analyze.plot decorator can only visualize scalar values.\n"
-            "Solutions:\n"
-            "1. Set derive_metric to return a single scalar value\n"
-            "2. modify @nsight.analyze.kernel decorator to specify only a single metric.\n"
         )
 
 
