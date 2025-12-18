@@ -4,7 +4,4 @@
 Feedback
 ----------
 
-Feedback and comments regarding this software are welcome.
-For questions, suggestions, or issue reports, please send an email to:
-
-`nsight-python-support@nvidia.com <mailto:nsight-python-support@nvidia.com>`_.
+Feedback and comments regarding this software are welcome. For questions, suggestions, or issue reports, use the Nsight Python Developer Forum: https://forums.developer.nvidia.com/c/developer-tools/nsight-python/749 .
