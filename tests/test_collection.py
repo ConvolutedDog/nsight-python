@@ -11,6 +11,10 @@ import pytest
 from nsight import collection, exceptions
 
 
+def func_name(x: int, y: int, z: int) -> None:
+    None
+
+
 @patch("subprocess.run")
 def test_launch_ncu_runs_with_ncu_available(mock_run: MagicMock) -> None:
     # Simulate "ncu --version" runs successfully, and so does the main profiling command
@@ -18,7 +22,8 @@ def test_launch_ncu_runs_with_ncu_available(mock_run: MagicMock) -> None:
 
     collection.ncu.launch_ncu(
         "report.ncu-rep",
-        "func_name",
+        func_name,
+        [(1,), (2,), (3,)],
         metrics=["sm__cycles_elapsed.avg"],
         cache_control="all",
         clock_control="base",
@@ -37,7 +42,13 @@ def test_launch_ncu_runs_with_ncu_available(mock_run: MagicMock) -> None:
             pytest.helpers.mock_any_command_string(),
             shell=True,
             check=True,
-            env=pytest.helpers.env_contains({"NSPY_NCU_PROFILE": "func_name"}),
+            env=pytest.helpers.env_contains(
+                {
+                    "NSPY_NCU_PROFILE": collection.ncu.get_signature(
+                        func_name, [(1,), (2,), (3,)]
+                    )
+                }
+            ),
         ),
     ]
 
@@ -57,7 +68,8 @@ def test_launch_ncu_falls_back_without_ncu(mock_run: MagicMock) -> None:
     with pytest.raises(exceptions.NCUNotAvailableError) as exc_info:
         collection.ncu.launch_ncu(
             "report.ncu-rep",
-            "func_name",
+            func_name,
+            [(1,), (2,), (3,)],
             metrics=["metric"],
             cache_control="all",
             clock_control="base",

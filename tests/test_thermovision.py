@@ -8,6 +8,7 @@ from unittest.mock import patch
 import torch
 
 import nsight
+from nsight import collection
 
 # ============================================================================
 # Thermovision integration tests
@@ -28,7 +29,9 @@ def test_thermovision_module_with_thermal_waiting() -> None:
 
     try:
         # Set environment variable to prevent subprocess spawning
-        os.environ["NSPY_NCU_PROFILE"] = "thermo_kernel"
+        os.environ["NSPY_NCU_PROFILE"] = collection.ncu.get_signature(
+            thermo_kernel, [(1024,)]
+        )
 
         tlimit_calls = 0
         temp_calls = 0
@@ -77,7 +80,9 @@ def test_thermovision_module_without_thermal_waiting() -> None:
 
     try:
         # Set environment variable to prevent subprocess spawning
-        os.environ["NSPY_NCU_PROFILE"] = "thermo_kernel"
+        os.environ["NSPY_NCU_PROFILE"] = collection.ncu.get_signature(
+            thermo_kernel, [(1024,)]
+        )
 
         def get_tlimit(handle: Any) -> int:
             return 100  # Always high, no waiting needed
