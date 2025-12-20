@@ -22,6 +22,7 @@ dependencies = [
   "matplotlib",
   "nvidia-ml-py",
   "ncu-report",
+  "deepdiff",
 ]
 
 classifiers = [

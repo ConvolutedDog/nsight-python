@@ -25,6 +25,7 @@ Welcome to the Nsight Python documentation!
    :maxdepth: 2
    :caption: Release Notes
 
+   release_notes/release_notes
    release_notes/known_issues
    release_notes/support
    release_notes/disclaimer

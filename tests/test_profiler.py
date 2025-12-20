@@ -141,6 +141,18 @@ def test_config_at_call_time_with_kwargs() -> None:
 
 
 # ----------------------------------------------------------------------------
+
+
+def test_config_at_call_time_repeated() -> None:
+    """Test providing configuration(s) to multiple calls"""
+    result_a = config_at_call_time_configs(42, 23)
+    result_b = config_at_call_time_configs(configs=[(17, 92), (18, 93)])
+
+    assert len(result_a.to_dataframe()) == 1
+    assert len(result_b.to_dataframe()) == 2
+
+
+# ----------------------------------------------------------------------------
 # Tests for functions with no arguments
 # ----------------------------------------------------------------------------
 
@@ -288,7 +300,7 @@ def test_no_args_function_with_derive_metric() -> None:
         a = torch.randn(128, 128, device="cuda")
         b = torch.randn(128, 128, device="cuda")
         with nsight.annotate("test"):
-            _ = a @ b
+            _ = a + b
 
     result = no_args_with_transform()
 

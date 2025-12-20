@@ -13,9 +13,10 @@ import os
 import subprocess
 import sys
 from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import Any, Literal
+from typing import Any, List, Literal, cast
 
 import pandas as pd
+from deepdiff import DeepHash
 
 from nsight import exceptions, extraction, utils
 from nsight.cache import GlobalNCUProfileCache
@@ -23,9 +24,19 @@ from nsight.collection import core
 from nsight.exceptions import NCUErrorContext
 
 
+def get_signature(
+    func: Callable[..., Any],
+    configs: List[Sequence[Any]],
+) -> str:
+    key = (func.__name__, configs)
+    hashes = DeepHash(key)
+    return cast(str, hashes[key])
+
+
 def launch_ncu(
     report_path: str,
-    name: str,
+    func: Callable[..., None],
+    configs: List[Sequence[Any]],
     metrics: Sequence[str],
     cache_control: Literal["none", "all"],
     clock_control: Literal["none", "base"],
@@ -61,9 +72,9 @@ def launch_ncu(
     script_path = os.path.abspath(sys.argv[0])
     script_args = " ".join(sys.argv[1:])
 
-    # Set an environment variable to detect recursive calls
+    # Set an environment variable to detect call site
     env = os.environ.copy()
-    env["NSPY_NCU_PROFILE"] = name
+    env["NSPY_NCU_PROFILE"] = get_signature(func, configs)
 
     if cache_control not in ("none", "all"):
         raise ValueError("cache_control must be 'none', or 'all'")
@@ -205,6 +216,9 @@ class NCUCollector(core.NsightCollector):
             Collected profiling data.
         """
 
+        # Materialize the configs
+        configs_list = list(configs)
+
         # Check if the script is already running under ncu
         if "NSPY_NCU_PROFILE" not in os.environ:
 
@@ -214,7 +228,8 @@ class NCUCollector(core.NsightCollector):
             # Launch NVIDIA Nsight Compute
             log_path = launch_ncu(
                 report_path,
-                func.__name__,
+                func,
+                configs_list,
                 self.metrics,
                 self.cache_control,
                 self.clock_control,
@@ -234,7 +249,7 @@ class NCUCollector(core.NsightCollector):
             df = extraction.extract_df_from_report(
                 report_path,
                 self.metrics,
-                configs,  # type: ignore[arg-type]
+                configs_list,  # type: ignore[arg-type]
                 settings.runs,
                 func,
                 settings.derive_metric,
@@ -250,21 +265,21 @@ class NCUCollector(core.NsightCollector):
 
         else:
             # If NSPY_NCU_PROFILE is set, just run the function normally
-            name = os.environ["NSPY_NCU_PROFILE"]
+            sig = os.environ["NSPY_NCU_PROFILE"]
 
             # If this is not the function we are profiling, just load from cache
-            if func.__name__ != name:
+            if get_signature(func, configs_list) != sig:
                 return GlobalNCUProfileCache().load_profile_result(func.__name__)
 
             if settings.output_progress:
                 utils.print_header(
-                    f"Profiling {name}",
-                    f"{len(configs) if isinstance(configs, Collection) else 'Unknown number of'} configurations, {settings.runs} runs each",
+                    f"Profiling {func.__name__}",
+                    f"{len(configs_list)} configurations, {settings.runs} runs each",
                 )
 
             core.run_profile_session(
                 func,
-                configs,
+                configs_list,
                 settings.runs,
                 settings.output_progress,
                 settings.output_detailed,

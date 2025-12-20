@@ -11,7 +11,7 @@ import threading
 import time
 import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import Any
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -133,7 +133,7 @@ def _sanitize_configs(
 
 def run_profile_session(
     func: Callable[..., None],
-    configs: Iterable[Sequence[Any]],
+    configs: List[Sequence[Any]],
     runs: int,
     output_progress: bool,
     output_detailed: bool,
@@ -147,12 +147,8 @@ def run_profile_session(
     if thermal_control:
         thermovision_initialized = thermovision.init()
 
-    if isinstance(configs, Collection):
-        total_configs = len(configs)
-        total_runs = total_configs * runs
-    else:
-        total_configs = None
-        total_runs = None
+    total_configs = len(configs)
+    total_runs = total_configs * runs
 
     curr_config = 0
     curr_run = 0
@@ -216,9 +212,9 @@ def run_profile_session(
 
             # Update time estimates every half second
             if time.time() - progress_time > 0.5:
-                if output_progress and isinstance(configs, Collection):
+                if output_progress:
                     utils.print_progress_bar(
-                        total_runs,  # type: ignore[arg-type]
+                        total_runs,
                         curr_run,
                         bar_length,
                         avg_time_per_run,
@@ -227,9 +223,9 @@ def run_profile_session(
                 progress_time = time.time()
 
     # Update progress bar at end so it shows 100%
-    if output_progress and isinstance(configs, Collection):
+    if output_progress:
         utils.print_progress_bar(
-            total_runs,  # type: ignore[arg-type]
+            total_runs,
             curr_run,
             bar_length,
             avg_time_per_run,
