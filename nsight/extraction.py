@@ -212,6 +212,26 @@ def extract_df_from_report(
             # evaluate the measured metrics
             values = data.values
             if derive_metric is not None:
+                if not callable(derive_metric):
+                    raise TypeError("derive_metric must be a callable function")
+
+                if values is not None:
+                    derive_metric_params = inspect.signature(derive_metric).parameters
+                    has_varargs: bool = any(
+                        p.kind == inspect.Parameter.VAR_POSITIONAL
+                        for p in derive_metric_params.values()
+                    )
+                    actual_params = None if has_varargs else len(derive_metric_params)
+                    # If there are varargs, skip the check
+                    if actual_params is not None:
+                        expected_params = len(values) + len(conf)
+                        if actual_params != expected_params:
+                            raise ValueError(
+                                f"derive_metric expects {expected_params} parameters "
+                                f"({len(values)} metric values + {len(conf)} configs), "
+                                f"but has {actual_params} parameters"
+                            )
+
                 derived_metric: DerivedValueDict | DerivedValue = (
                     None if values is None else derive_metric(*values, *conf)
                 )
@@ -228,9 +248,6 @@ def extract_df_from_report(
                     # and use the name of the function as the metric name.
                     all_transformed_values.append(derived_metric)
                     all_transformed_metrics.append(derive_metric.__name__)
-            else:
-                all_transformed_values.append(values)
-                all_transformed_metrics.append(False)
 
             # gather remaining required data
             annotations.append(annotation)

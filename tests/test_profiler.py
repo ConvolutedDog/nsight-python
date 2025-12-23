@@ -959,16 +959,22 @@ def _compute_custom_metric_2(time_ns: float, x: int, y: int) -> dict[str, float]
         (_compute_custom_metric_1, "_compute_custom_metric_1"),
         (_compute_custom_metric_2, "Custom Metric"),
         (lambda time_ns, x, y: (x * y) / (time_ns / 1e9) / 1e9, "<lambda>"),
+        (
+            lambda time_ns, x, y: {"Custom Metric": (x * y) / (time_ns / 1e9) / 1e9},
+            "Custom Metric",
+        ),
     ],
 )  # type: ignore[untyped-decorator]
 def test_parameter_derive_metric(derive_metric_func: Any, expected_name: str) -> None:
     """Test the derive_metric parameter to transform collected metrics."""
 
-    num_runs = 2
+    configs = [(100, 100), (200, 200)]
+    # Number of raw collected metric rows, excluding any derived metrics
+    raw_metric_rows = len(configs)  # as metrics = 1, annotations = 1
 
     @nsight.analyze.kernel(
-        configs=[(100, 100), (200, 200)],
-        runs=num_runs,
+        configs=configs,
+        runs=2,
         output="quiet",
         derive_metric=derive_metric_func,
     )
@@ -983,12 +989,12 @@ def test_parameter_derive_metric(derive_metric_func: Any, expected_name: str) ->
     df = profile_output.to_dataframe()
 
     assert all(
-        df["Metric"][0:num_runs] == "gpu__time_duration.sum"
-    ), f"Metric column (row-{0} ~ row-{num_runs-1}) should show 'gpu__time_duration.sum'"
+        df["Metric"][0:raw_metric_rows] == "gpu__time_duration.sum"
+    ), f"Metric column (row-{0} ~ row-{raw_metric_rows-1}) should show 'gpu__time_duration.sum'"
 
     assert all(
-        df["Metric"][num_runs : len(df)] == expected_name
-    ), f"Metric column (row-{num_runs} ~ row-{len(df)-1}) should show '{expected_name}'"
+        df["Metric"][raw_metric_rows : len(df)] == expected_name
+    ), f"Metric column (row-{raw_metric_rows} ~ row-{len(df)-1}) should show '{expected_name}'"
 
     # Verify the metric values are transformed (should be positive numbers)
     assert "AvgValue" in df.columns, "AvgValue column should exist"

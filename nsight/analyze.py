@@ -108,7 +108,7 @@ def kernel(
             the arguments of the profile-decorated function and returns the new
             metrics. Return value can be either:
 
-            - A single value (float/int): Will be added as a new metric with the function name as the metric name.
+            - A single value (float/int): Will be added as a new metric with the function name as the metric name. For lambda functions, the metric name will be ``"<lambda>"``.
             - A dictionary: Keys will be used as metric names, values as metric values.
 
             The parameter order requirements for the custom function:
@@ -401,11 +401,11 @@ def plot(
 
             if "NSPY_NCU_PROFILE" not in os.environ:
                 # Legalize the user-provided metric for plotting
-                lagalized_metric = _legalize_metric(result, metric)
+                legalized_metric = _legalize_metric(result, metric)
 
                 visualization.visualize(
                     result.to_dataframe(),
-                    metric=lagalized_metric,
+                    metric=legalized_metric,
                     row_panels=row_panels,
                     col_panels=col_panels,
                     x_keys=x_keys,
