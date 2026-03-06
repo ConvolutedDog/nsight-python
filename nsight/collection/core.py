@@ -31,9 +31,41 @@ def _get_regular_params(
 
 def _count_params(
     sig: inspect.Signature,
-) -> int:
-    """Count the number of regular (non-variadic) parameters in a signature."""
-    return len(_get_regular_params(sig))
+) -> tuple[int, int]:
+    """Count (required, total) regular parameters in a signature.
+
+    Returns:
+        A (required_count, total_count) tuple. required_count excludes
+        parameters with defaults, total_count includes them.
+    """
+    params = _get_regular_params(sig)
+    required = sum(1 for p in params if p.default is inspect.Parameter.empty)
+    return required, len(params)
+
+
+def _pad_config_with_defaults(
+    sig: inspect.Signature, config: Sequence[Any]
+) -> tuple[Any, ...]:
+    """Pad a config tuple with default values for any missing trailing parameters.
+
+    If the config provides fewer values than the function has parameters, the
+    remaining parameters must have defaults, which are appended to the config.
+    This ensures the rest of the pipeline always sees full-length configs.
+
+    Args:
+        sig: The function's inspect.Signature.
+        config: The (possibly short) config tuple.
+
+    Returns:
+        A full-length config tuple with defaults filled in.
+    """
+    params = _get_regular_params(sig)
+    if len(config) == len(params):
+        return tuple(config)
+    padded = list(config)
+    for param in params[len(config):]:
+        padded.append(param.default)
+    return tuple(padded)
 
 
 def _bind_config_to_signature(
@@ -129,8 +161,8 @@ def _sanitize_configs(
         if decorator_configs is None:
             # Check if function takes no arguments
             sig = inspect.signature(func)
-            param_count = _count_params(sig)
-            if param_count == 0:
+            required_count, total_count = _count_params(sig)
+            if required_count == 0:
                 # For functions with no arguments, create a single empty config
                 # This allows calling the function without requiring explicit configs
                 configs = [()]
@@ -158,8 +190,8 @@ def _sanitize_configs(
 
         # If function takes exactly one argument, allow scalar configs
         sig = inspect.signature(func)
-        param_count = _count_params(sig)
-        if param_count == 1:
+        required_count, total_count = _count_params(sig)
+        if total_count == 1:
             normalized_configs: list[Sequence[Any]] = []
             for config in configs:
                 if utils.is_scalar(config):
@@ -175,11 +207,21 @@ def _sanitize_configs(
             )
         first_config_arg_count = config_lengths[0]
 
-        # Validate that the number of args matches the number of function parameters
-        if first_config_arg_count != param_count:
-            raise exceptions.ProfilerException(
-                f"Configs have {first_config_arg_count} arguments, but function expects {param_count}"
-            )
+        # Validate that the number of args is between required and total parameters
+        if not (required_count <= first_config_arg_count <= total_count):
+            if required_count == total_count:
+                raise exceptions.ProfilerException(
+                    f"Configs have {first_config_arg_count} arguments, but function expects {total_count}"
+                )
+            else:
+                raise exceptions.ProfilerException(
+                    f"Configs have {first_config_arg_count} arguments, but function expects "
+                    f"between {required_count} and {total_count}"
+                )
+
+        # Pad configs with default values for any missing trailing parameters
+        if first_config_arg_count < total_count:
+            configs = [_pad_config_with_defaults(sig, config) for config in configs]
 
     return configs  # type: ignore[return-value]
 
@@ -230,15 +272,15 @@ def run_profile_session(
 
     for c in configs:
         sig = inspect.signature(func)
-        param_count = _count_params(sig)
+        required_count, total_count = _count_params(sig)
 
         # Handle scalar values
-        if param_count == 1:
+        if total_count == 1:
             if utils.is_scalar(c):
                 c = (c,)
 
         # Check if func supports the input configs
-        if param_count != len(c):
+        if not (required_count <= len(c) <= total_count):
             raise exceptions.ProfilerException(
                 f"Function '{func.__name__}' does not support the input configuration"
             )

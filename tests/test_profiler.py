@@ -431,9 +431,13 @@ def function_with_default_parameter(x: int, y: Any = None) -> None:
 
 
 def test_function_with_default_parameter() -> None:
-    """Test that calling function with defaults without providing all args raises error."""
-    with pytest.raises(exceptions.ProfilerException):
-        function_with_default_parameter()
+    """Test that configs can omit parameters with defaults — they get padded automatically."""
+    result = function_with_default_parameter()
+    df = result.to_dataframe()
+
+    assert len(df) == 2, f"Expected 2 rows (2 configs), got {len(df)}"
+    # y has default None, which becomes NaN in pandas
+    assert df["y"].isna().all(), f"y should use default None/NaN, got {df['y'].tolist()}"
 
 
 # ============================================================================
@@ -1300,6 +1304,74 @@ def test_function_with_args_and_keyword_only() -> None:
     assert len(df) == 1, f"Expected 1 row, got {len(df)}"
     assert df["x"].iloc[0] == 32
     assert df["y"].iloc[0] == 64
+
+
+def test_default_values_omitted() -> None:
+    """Test that configs can omit parameters that have default values."""
+
+    @nsight.analyze.kernel(output="quiet")
+    def kernel_with_defaults(x: int, y: int, z: int = 64) -> None:
+        a = torch.randn(x, y, device="cuda")
+        b = torch.randn(x, y, device="cuda")
+        with nsight.annotate("test_defaults"):
+            _ = a + b
+
+    result = kernel_with_defaults(configs=[(32, 32)])
+    df = result.to_dataframe()
+
+    assert len(df) == 1, f"Expected 1 row, got {len(df)}"
+    assert df["x"].iloc[0] == 32
+    assert df["y"].iloc[0] == 32
+    assert df["z"].iloc[0] == 64, f"z should use default 64, got {df['z'].iloc[0]}"
+
+
+def test_default_values_overridden() -> None:
+    """Test that configs can explicitly provide values for defaulted params."""
+
+    @nsight.analyze.kernel(output="quiet")
+    def kernel_with_defaults(x: int, y: int, z: int = 64) -> None:
+        a = torch.randn(x, y, device="cuda")
+        b = torch.randn(x, y, device="cuda")
+        with nsight.annotate("test_defaults_override"):
+            _ = a + b
+
+    result = kernel_with_defaults(configs=[(32, 32, 128)])
+    df = result.to_dataframe()
+
+    assert len(df) == 1, f"Expected 1 row, got {len(df)}"
+    assert df["z"].iloc[0] == 128, f"z should be overridden to 128, got {df['z'].iloc[0]}"
+
+
+def test_keyword_only_default_omitted() -> None:
+    """Test keyword-only params with defaults can be omitted from configs."""
+
+    @nsight.analyze.kernel(output="quiet")
+    def kernel_kw_default(x: int, *, y: int = 32) -> None:
+        a = torch.randn(x, y, device="cuda")
+        b = torch.randn(x, y, device="cuda")
+        with nsight.annotate("test_kw_default"):
+            _ = a + b
+
+    result = kernel_kw_default(configs=[(32,)])
+    df = result.to_dataframe()
+
+    assert len(df) == 1, f"Expected 1 row, got {len(df)}"
+    assert df["x"].iloc[0] == 32
+    assert df["y"].iloc[0] == 32, f"y should use default 32, got {df['y'].iloc[0]}"
+
+
+def test_too_few_config_args_rejected() -> None:
+    """Test that configs with fewer args than required params are rejected."""
+
+    @nsight.analyze.kernel(output="quiet")
+    def kernel_two_required(x: int, y: int, z: int = 64) -> None:
+        a = torch.randn(x, y, device="cuda")
+        b = torch.randn(x, y, device="cuda")
+        with nsight.annotate("test"):
+            _ = a + b
+
+    with pytest.raises(exceptions.ProfilerException, match="between 2 and 3"):
+        kernel_two_required(configs=[(32,)])
 
 
 def test_too_many_config_args_rejected() -> None:

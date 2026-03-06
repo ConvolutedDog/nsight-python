@@ -107,8 +107,11 @@ def aggregate_data(
                 )(col),
             )
 
+    # Ensure Value column is numeric (explode can leave it as object dtype)
+    df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+
     # Apply aggregation with named aggregation
-    groupby_df = df.groupby(groupby_columns + func_fields)
+    groupby_df = df.groupby(groupby_columns + func_fields, dropna=False)
     agg_df = groupby_df.agg(**named_aggs).reset_index()
 
     # Compute 95% confidence intervals
