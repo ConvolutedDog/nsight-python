@@ -107,8 +107,9 @@ def aggregate_data(
                 )(col),
             )
 
-    # Ensure Value column is numeric (explode can leave it as object dtype)
-    df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+    # Ensure Value column is numeric (explode can leave it as object dtype
+    # even though the underlying values are always numeric from NCU metrics)
+    df["Value"] = pd.to_numeric(df["Value"])
 
     # Apply aggregation with named aggregation
     groupby_df = df.groupby(groupby_columns + func_fields, dropna=False)
