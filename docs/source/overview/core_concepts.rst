@@ -58,10 +58,13 @@ Use :func:`nsight.analyze.kernel` to annotate a benchmark function. Nsight Pytho
 
    benchmark(configs=[(1024,), (2048,)])
 
-Each config tuple is unpacked as positional arguments to the function's regular parameters.
-``*args`` and ``**kwargs`` are not supported — they will be ignored and will not appear in
-the profiling results. If your function uses ``**kwargs``, nsight-python will tolerate it
-in the signature but the kwargs will always be empty during profiling.
+Each config tuple is unpacked as positional arguments via ``func(*config)``. This means
+only regular positional parameters (``POSITIONAL_OR_KEYWORD``) are supported. Specifically:
+
+- ``*args`` and ``**kwargs`` at the end of the signature are tolerated but ignored — they
+  will always be empty during profiling and will not appear in the results.
+- **Keyword-only parameters** (parameters after ``*`` or ``*args``) are **not supported**
+  and will cause a runtime error, since configs cannot be passed as keyword arguments.
 
 **3. Plot Decorator**  
 Add :func:`nsight.analyze.plot` to automatically generate plots from your profiling runs.

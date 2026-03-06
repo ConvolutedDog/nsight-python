@@ -60,8 +60,10 @@ def _sanitize_configs(
         - For functions with no parameters, an empty config [()] is created automatically.
         - The function combines `args` and `kwargs` into a single list if `args` are provided.
         - The function assumes that `kwargs` keys are in the expected order when combining.
-        - ``*args`` and ``**kwargs`` in the decorated function's signature are ignored.
-          Only regular parameters are counted when validating config lengths.
+        - Only regular positional parameters (``POSITIONAL_OR_KEYWORD``) are used
+          for config validation. ``*args`` and ``**kwargs`` at the end of the
+          signature are tolerated but ignored. Keyword-only parameters (after
+          ``*`` or ``*args``) are not supported and will fail at runtime.
     """
     if len(args) > 0:
         # We do not expect any configs in this case
