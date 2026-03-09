@@ -1248,7 +1248,9 @@ def test_tuple_typed_function_args() -> None:
     """
 
     @nsight.analyze.kernel(output="quiet")
-    def kernel_with_tuple_args(size: int, mnkl: tuple, tile_shape: tuple) -> None:
+    def kernel_with_tuple_args(
+        size: int, mnkl: tuple[int, ...], tile_shape: tuple[int, ...]
+    ) -> None:
         a = torch.randn(size, size, device="cuda")
         b = torch.randn(size, size, device="cuda")
         with nsight.annotate("test_tuple_args"):
@@ -1290,7 +1292,9 @@ def test_tuple_typed_function_args_multiple_metrics() -> None:
     ]
 
     @nsight.analyze.kernel(output="quiet", metrics=metrics)
-    def kernel_with_tuple_args_multi(size: int, mnkl: tuple, pair: tuple) -> None:
+    def kernel_with_tuple_args_multi(
+        size: int, mnkl: tuple[int, ...], pair: tuple[int, ...]
+    ) -> None:
         a = torch.randn(size, size, device="cuda")
         b = torch.randn(size, size, device="cuda")
         with nsight.annotate("test_tuple_args_multi"):
