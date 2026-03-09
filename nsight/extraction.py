@@ -125,8 +125,10 @@ def extract_df_from_report(
 
     # Create a new array for each regular argument in the signature (exclude *args/**kwargs)
     arg_arrays: dict[str, list[Any]] = {
-        name: [] for name, p in sig.parameters.items()
-        if p.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+        name: []
+        for name, p in sig.parameters.items()
+        if p.kind
+        not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
     }
 
     # Extract all profiling data
@@ -260,7 +262,10 @@ def extract_df_from_report(
             # Add a field for every config argument
             config_iter = iter(conf)
             for name, param in sig.parameters.items():
-                if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                if param.kind in (
+                    inspect.Parameter.VAR_POSITIONAL,
+                    inspect.Parameter.VAR_KEYWORD,
+                ):
                     continue
                 arg_arrays[name].append(next(config_iter))
 

@@ -39,8 +39,10 @@ def aggregate_data(
 
     # Get the number of arguments in the signature of func (exclude *args/**kwargs)
     num_args = sum(
-        1 for p in inspect.signature(func).parameters.values()
-        if p.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+        1
+        for p in inspect.signature(func).parameters.values()
+        if p.kind
+        not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
     )
 
     # Get the last N fields of the dataframe where N is the number of arguments

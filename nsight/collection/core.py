@@ -24,8 +24,10 @@ def _get_regular_params(
 ) -> list[inspect.Parameter]:
     """Return the list of regular (non-variadic) parameters from a signature."""
     return [
-        p for p in sig.parameters.values()
-        if p.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+        p
+        for p in sig.parameters.values()
+        if p.kind
+        not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
     ]
 
 
@@ -63,7 +65,7 @@ def _pad_config_with_defaults(
     if len(config) == len(params):
         return tuple(config)
     padded = list(config)
-    for param in params[len(config):]:
+    for param in params[len(config) :]:
         padded.append(param.default)
     return tuple(padded)
 
@@ -90,7 +92,10 @@ def _bind_config_to_signature(
     keyword: dict[str, Any] = {}
     config_iter = iter(config)
     for param in sig.parameters.values():
-        if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+        if param.kind in (
+            inspect.Parameter.VAR_POSITIONAL,
+            inspect.Parameter.VAR_KEYWORD,
+        ):
             continue
         val = next(config_iter)
         if param.kind == inspect.Parameter.KEYWORD_ONLY:

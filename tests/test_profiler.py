@@ -437,7 +437,9 @@ def test_function_with_default_parameter() -> None:
 
     assert len(df) == 2, f"Expected 2 rows (2 configs), got {len(df)}"
     # y has default None, which becomes NaN in pandas
-    assert df["y"].isna().all(), f"y should use default None/NaN, got {df['y'].tolist()}"
+    assert (
+        df["y"].isna().all()
+    ), f"y should use default None/NaN, got {df['y'].tolist()}"
 
 
 # ============================================================================
@@ -1339,7 +1341,9 @@ def test_default_values_overridden() -> None:
     df = result.to_dataframe()
 
     assert len(df) == 1, f"Expected 1 row, got {len(df)}"
-    assert df["z"].iloc[0] == 128, f"z should be overridden to 128, got {df['z'].iloc[0]}"
+    assert (
+        df["z"].iloc[0] == 128
+    ), f"z should be overridden to 128, got {df['z'].iloc[0]}"
 
 
 def test_keyword_only_default_omitted() -> None:
